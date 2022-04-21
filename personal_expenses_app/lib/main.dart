@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import './transaction.dart';
-import 'package:intl/intl.dart';
+import 'widgets/transactionList.dart';
+import 'widgets/newTransactions.dart';
+import 'widgets/chartBars.dart';
+import 'models/transaction.dart';
+import 'widgets/chart.dart';
 
 void main() => runApp(MyApp());
 
@@ -12,255 +15,100 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyHomePage extends StatelessWidget {
-  final List<Transaction> transaction = [
-    Transaction(
-        id: 'ID0',
-        title: 'ROG Flow X13',
-        amount: 153999,
-        dateTime: DateTime.now()),
-    Transaction(
-        id: 'ID2',
-        title: 'LG-Ultrawide',
-        amount: 52000,
-        dateTime: DateTime.now()),
-    Transaction(
-        id: 'ID1',
-        title: 'MacBook Pro',
-        amount: 400000,
-        dateTime: DateTime.now()),
-  ];
+class MyHomePage extends StatefulWidget {
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  final List<Transaction> transaction = [];
   final titleInput = TextEditingController();
   final amountInput = TextEditingController();
 
-  var openText = false;
+  final List<Transaction> _userTransaction = [];
+
+  List<Transaction> get _recentTransactions {
+    return _userTransaction.where((tx) {
+      return tx.dateTime.isAfter(DateTime.now().subtract(Duration(days: 7)));
+    }).toList();
+  }
+
+  void _addNewTransaction(
+      String txInput, double txAmount, DateTime chosenDate) {
+    final newTx = Transaction(
+      id: DateTime.now().toString(),
+      title: txInput,
+      amount: txAmount,
+      dateTime: chosenDate,
+    );
+
+    setState(() {
+      _userTransaction.add(newTx);
+    });
+  }
+
+  void _openTheUserInput(BuildContext openContext) {
+    showModalBottomSheet(
+        context: openContext,
+        builder: (openContext) {
+          return Container(
+            color: Colors.grey[850],
+            child: NewTransaction(_addNewTransaction),
+          );
+        });
+  }
+
+  void _deleteTransaction(String id) {
+    setState(() {
+      _userTransaction.removeWhere((transact) => transact.id == id);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
-          backgroundColor: Colors.grey.shade900,
-          appBar: AppBar(
-            backgroundColor: Colors.grey.shade800,
-            title: Text(
-              'PERSONAL EXPENSES  ',
-              style: GoogleFonts.raleway(
-                  fontSize: 35,
-                  color: Colors.yellow[500],
-                  fontWeight: FontWeight.w400),
-            ),
-            centerTitle: true,
+        backgroundColor: Colors.grey.shade900,
+        appBar: AppBar(
+          backgroundColor: Colors.grey.shade800,
+          title: Text(
+            'PERSONAL EXPENSES  ',
+            style: GoogleFonts.raleway(
+                fontSize: 35,
+                color: Colors.yellow[500],
+                fontWeight: FontWeight.w400),
           ),
-          body: ListView(
+          centerTitle: true,
+        ),
+        body: ListView(children: [
+          Column(
             children: [
-              Column(
-                children: [
-                  Container(
-                    margin: EdgeInsets.only(left: 20, right: 12, top: 10),
-                    width: double.infinity,
-                    height: 50,
-                    child: Card(
-                      child: Text(
-                        'Weekly chart',
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(left: 20, right: 12, top: 10),
-                    child: Card(
-                      elevation: 5,
-                      child: Container(
-                        color: Colors.grey[850],
-                        padding: EdgeInsets.all(10),
-                        child: Column(
-                          children: [
-                            TextField(
-                              style: GoogleFonts.raleway(
-                                  fontSize: 19,
-                                  color: Colors.yellow[500],
-                                  fontWeight: FontWeight.w500),
-                              controller: titleInput,
-                              // onChanged: (value) => titleInput = value,
-                              cursorHeight: 30,
-                              cursorColor: Colors.yellow,
-                              decoration: InputDecoration(
-                                enabledBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.yellow),
-                                ),
-                                focusedBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.white),
-                                ),
-                                labelStyle: GoogleFonts.raleway(
-                                    fontSize: 19,
-                                    color: Colors.yellow[500],
-                                    fontWeight: FontWeight.w500),
-                                labelText: 'Now what did you purchase ? ',
-                                focusColor: Colors.yellow,
-                              ),
-                            ),
-                            TextField(
-                              controller: amountInput,
-
-                              style: GoogleFonts.raleway(
-                                  fontSize: 19,
-                                  color: Colors.yellow[500],
-                                  fontWeight: FontWeight.w500),
-                              // onChanged: (value) => amountInput = value,
-                              cursorHeight: 30,
-                              cursorColor: Colors.yellow,
-
-                              decoration: InputDecoration(
-                                  enabledBorder: UnderlineInputBorder(
-                                    borderSide:
-                                        BorderSide(color: Colors.yellow),
-                                  ),
-                                  focusedBorder: UnderlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.white),
-                                  ),
-                                  labelStyle: GoogleFonts.raleway(
-                                      fontSize: 19,
-                                      color: Colors.yellow[500],
-                                      fontWeight: FontWeight.w500),
-                                  labelText: 'How much did it cost you ?'),
-                            ),
-                            Container(
-                              width: double.infinity,
-                              margin: EdgeInsets.only(top: 10),
-                              child: ElevatedButton(
-                                onPressed: () => {
-                                  print(titleInput.text),
-                                  print(amountInput.text),
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    primary: Colors.yellow,
-                                    minimumSize: Size(100, 40)),
-                                child: Text(
-                                  'Add your expense',
-                                  style: GoogleFonts.raleway(
-                                    fontSize: 30,
-                                    color: Colors.blueGrey[900],
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(left: 15, right: 5),
-                    width: double.infinity,
-                    child: Column(
-                      children: transaction.map((tx) {
-                        return Card(
-                          color: Colors.grey[800],
-                          margin: EdgeInsets.all(10),
-                          child: Row(
-                            children: [
-                              Row(
-                                children: [
-                                  Column(
-                                    children: [
-                                      // Container(
-                                      //   margin: EdgeInsets.only(
-                                      //       left: 20, top: 10, right: 20, bottom: 10),
-                                      //   child: Text(
-                                      //     'Amount Spent',
-                                      //     style: GoogleFonts.raleway(
-                                      //         fontSize: 17,
-                                      //         color: Colors.amber[400],
-                                      //         fontWeight: FontWeight.w500),
-                                      //   ),
-                                      // ),
-                                      Container(
-                                        padding: EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                            border: Border.all(
-                                          color: Colors.red,
-                                          width: 2,
-                                        )),
-                                        margin: EdgeInsets.only(
-                                            left: 10,
-                                            top: 5,
-                                            right: 30,
-                                            bottom: 20),
-                                        child: Text(
-                                          '\u{20B9} ' + tx.amount.toString(),
-                                          style: GoogleFonts.raleway(
-                                              fontSize: 19,
-                                              color: Colors.deepOrange[500],
-                                              fontWeight: FontWeight.w500),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              Column(
-                                children: [
-                                  Column(
-                                    children: [
-                                      Container(
-                                        margin: EdgeInsets.only(
-                                            left: 0,
-                                            top: 10,
-                                            right: 10,
-                                            bottom: 10),
-                                        child: Text(
-                                          tx.title,
-                                          style: GoogleFonts.raleway(
-                                              fontSize: 17,
-                                              color: Colors.amber[400],
-                                              fontWeight: FontWeight.w600),
-                                        ),
-                                      ),
-                                      Container(
-                                        margin: EdgeInsets.only(
-                                            left: 10,
-                                            top: 5,
-                                            right: 10,
-                                            bottom: 20),
-                                        child: Text(
-                                          DateFormat('dd-MM-yyyy hh:mm a ')
-                                              .format(tx.dateTime),
-                                          style: GoogleFonts.raleway(
-                                              fontSize: 17,
-                                              color: Colors.limeAccent[400],
-                                              fontWeight: FontWeight.w500),
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              )
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(left: 25, right: 15),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          primary: Colors.yellow, minimumSize: Size(410, 50)),
-                      onPressed: () => this.openText = true,
-                      child: Text(
-                        'ADD NEW EXPENSES',
-                        style: GoogleFonts.raleway(
-                          fontSize: 30,
-                          color: Colors.blueGrey[900],
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              Chart(_recentTransactions),
+              TransactionList(_userTransaction , _deleteTransaction)
             ],
-          )),
+          ),
+        ]),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButton: Builder(
+          builder: (context) => Container(
+            margin: EdgeInsets.only(left: 5, right: 5, bottom: 10),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  primary: Colors.yellow, minimumSize: Size(410, 50)),
+              child: Text(
+                'ADD NEW EXPENSES',
+                style: GoogleFonts.raleway(
+                  fontSize: 30,
+                  color: Colors.blueGrey[900],
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              onPressed: () => _openTheUserInput(context),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
